@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إنشاء حساب - جامعة أسيوط الجديدة التكنولوجية</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .registration-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+    }
+    
+    .registration-card {
+      width: 100%;
+      max-width: 48rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .registration-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 0.5rem;
+      background: linear-gradient(to right, #3b82f6, #6366f1, #a855f7);
+    }
+
+    body.dark .registration-container {
+      background: linear-gradient(to bottom right, #0f172a, #1e1b4b);
+    }
+
+    body.dark .registration-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tabs-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.4);
+      padding: 0.5rem;
+      border-radius: 1rem;
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    body.dark .tabs-container {
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-gray-700);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(to right, #2563eb, #4f46e5);
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+    }
+
+    .tab-btn:not(.active):hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    body.dark .tab-btn:not(.active):hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .input-group label {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-gray-700);
+      margin-right: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      width: 1.25rem;
+      height: 1.25rem;
+      transition: color 0.3s;
+    }
+
+    .input-wrapper:focus-within .input-icon {
+      color: #3b82f6;
+    }
+
+    .custom-input {
+      width: 100%;
+      height: 3rem;
+      padding-right: 3rem;
+      padding-left: 1rem;
+      background: rgba(255, 255, 255, 0.4);
+      border: none;
+      border-radius: 0.75rem;
+      font-family: inherit;
+      color: var(--text-gray-900);
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+      transition: all 0.3s;
+    }
+
+    body.dark .custom-input {
+      background: rgba(15, 23, 42, 0.4);
+      color: white;
+    }
+
+    .custom-input:focus {
+      outline: none;
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 2px #3b82f6;
+    }
+
+    .custom-select {
+      width: 100%;
+      height: 3rem;
+      padding-right: 1rem;
+      padding-left: 1rem;
+      background: rgba(255, 255, 255, 0.4);
+      border: none;
+      border-radius: 0.75rem;
+      font-family: inherit;
+      font-weight: 700;
+      color: var(--text-gray-900);
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+      appearance: none;
+      transition: all 0.3s;
+    }
+
+    body.dark .custom-select {
+      background: rgba(15, 23, 42, 0.4);
+      color: white;
+    }
+
+    .custom-select:focus {
+      outline: none;
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 2px #3b82f6;
+    }
+    
+    .divider {
+      border-top: 1px solid rgba(156, 163, 175, 0.2);
+      margin: 1.5rem 0;
+      padding-top: 1.5rem;
+    }
+
+    .primary-input {
+      background: rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      font-weight: 700;
+    }
+    
+    .toggle-password {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .toggle-password:hover {
+      color: #2563eb;
+    }
+    
+    .error-box {
+      display: none;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(220, 38, 38, 0.1);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(254, 202, 202, 1);
+      border-radius: 1rem;
+      color: #b91c1c;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .error-box.show {
+      display: flex;
+    }
+
+    body.dark .error-box {
+      background: rgba(220, 38, 38, 0.2);
+      border-color: rgba(153, 27, 27, 0.5);
+      color: #fca5a5;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      height: 3.5rem;
+      background: linear-gradient(to right, #2563eb, #4f46e5);
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 900;
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 20px 25px -5px rgba(191, 219, 254, 0.5), 0 8px 10px -6px rgba(191, 219, 254, 0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 1rem;
+    }
+
+    body.dark .submit-btn {
+      box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.3), 0 8px 10px -6px rgba(37, 99, 235, 0.3);
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(to right, #1d4ed8, #4338ca);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .back-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      height: 3rem;
+      border-radius: 0.75rem;
+      color: var(--text-gray-500);
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    body.dark .back-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .registration-form-container {
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+    
+    .registration-form-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .registration-form-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .registration-form-container::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.3);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="registration-container">
+    <div class="registration-card">
+      
+      <!-- Card Header -->
+      <div style="text-align: center; margin-bottom: 2.5rem;">
+        <img src="{{ url_for('static', filename='public/logo.jpg') }}" alt="Logo" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <h1 style="font-size: 2rem; font-weight: 900; background: linear-gradient(to right, #2563eb, #4f46e5); -webkit-background-clip: text; color: transparent; margin-bottom: 0.5rem;">
+          جامعة أسيوط الجديدة التكنولوجية
+        </h1>
+        <p style="color: var(--text-gray-700); font-weight: 700; opacity: 0.7;">New Assiut Technological University</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <button id="tab-register" class="tab-btn active">إنشاء حساب جديد</button>
+        <button id="tab-login" class="tab-btn" onclick="window.location.href='{{ url_for('student_login') }}'">تسجيل دخول</button>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error-message" class="error-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span id="error-text">حدث خطأ</span>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registration-form" class="registration-form-container">
+        <div class="form-grid">
+          <!-- Full Name -->
+          <div class="input-group">
+            <label>الاسم الكامل *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <input type="text" id="fullName" name="fullName" placeholder="أدخل اسمك الرباعي" class="custom-input" required />
+            </div>
+          </div>
+
+          <!-- Department -->
+          <div class="input-group">
+            <label>القسم *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+              <input type="text" id="department" name="department" placeholder="أدخل القسم" class="custom-input" required />
+            </div>
+          </div>
+
+          <!-- Academic Year -->
+          <div class="input-group">
+            <label>السنة الدراسية *</label>
+            <select id="academicYear" name="academicYear" class="custom-select" required>
+              <option value="" disabled selected>اختر السنة</option>
+              <option value="أولى">أولى</option>
+              <option value="ثانية">ثانية</option>
+              <option value="ثالثة">ثالثة</option>
+              <option value="رابعة">رابعة</option>
+            </select>
+          </div>
+
+          <!-- Section -->
+          <div class="input-group">
+            <label>السكشن *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <input type="text" id="section" name="section" placeholder="أدخل رقم السكشن" class="custom-input" required />
+            </div>
+          </div>
+
+          <!-- Student ID -->
+          <div class="input-group">
+            <label>الـ ID الخاص بك *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+              <input type="text" id="studentId" name="studentId" placeholder="أدخل الـ ID الجامعي" class="custom-input" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-grid">
+          <!-- Password -->
+          <div class="input-group">
+            <label>كلمة المرور *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="password" name="password" placeholder="********" class="custom-input primary-input" style="padding-left: 3rem;" required dir="ltr" />
+              <button type="button" class="toggle-password" onclick="toggleVisibility('password', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="input-group">
+            <label>تأكيد كلمة المرور *</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="أعد إدخال كلمة المرور" class="custom-input primary-input" style="padding-left: 3rem;" required dir="ltr" />
+              <button type="button" class="toggle-password" onclick="toggleVisibility('confirmPassword', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn">إنشاء الحساب الآن</button>
+      </form>
+
+      <!-- Back Button -->
+      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(156, 163, 175, 0.2);">
+        <button onclick="window.location.href='{{ url_for('index') }}'" class="back-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>العودة للصفحة الرئيسية</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Toggle Password Visibility
+    function toggleVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
+      
+      if (type === 'text') {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>';
+      } else {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+      }
+    }
+
+    // Form Submission
+    const form = document.getElementById('registration-form');
+    const errorBox = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      errorBox.classList.remove('show');
+
+      const fullName = document.getElementById('fullName').value;
+      const department = document.getElementById('department').value;
+      const academicYear = document.getElementById('academicYear').value;
+      const section = document.getElementById('section').value;
+      const studentId = document.getElementById('studentId').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!fullName || !department || !academicYear || !section || !studentId || !password || !confirmPassword) {
+        errorText.textContent = "الرجاء ملء جميع الحقول المطلوبة";
+        errorBox.classList.add('show');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorText.textContent = "كلمات المرور غير متطابقة";
+        errorBox.classList.add('show');
+        return;
+      }
+
+      if (password.length < 6) {
+        errorText.textContent = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+        errorBox.classList.add('show');
+        return;
+      }
+
+      submitBtn.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <div style="width: 1.25rem; height: 1.25rem; border: 2px solid rgba(255,255,255,0.5); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          جاري الحفظ...
+        </div>
+      `;
+      submitBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('fullName', fullName);
+      formData.append('department', department);
+      formData.append('academicYear', academicYear);
+      formData.append('section', section);
+      formData.append('studentId', studentId);
+      formData.append('password', password);
+      formData.append('confirmPassword', confirmPassword);
+
+      fetch('{{ url_for("student_registration") }}', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = data.redirect;
+        } else {
+          errorText.textContent = data.message;
+          errorBox.classList.add('show');
+          submitBtn.innerHTML = "إنشاء الحساب الآن";
+          submitBtn.disabled = false;
+        }
+      })
+      .catch(err => {
+        errorText.textContent = "حدث خطأ في الاتصال بالسيرفر";
+        errorBox.classList.add('show');
+        submitBtn.innerHTML = "إنشاء الحساب الآن";
+        submitBtn.disabled = false;
+      });
+    });
+
+    // Add spin keyframe dynamically
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

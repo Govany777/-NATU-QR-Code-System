@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام الحضور - جامعة أسيوط الجديدة التكنولوجية</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <div class="flex justify-center" style="margin-bottom: 1rem;">
+        <img src="{{ url_for('static', filename='public/logo.jpg') }}" alt="Logo" style="width: 120px; height: 120px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 4px solid white;">
+      </div>
+      <div class="text-center">
+        <h1 class="header-title">جامعة أسيوط الجديدة التكنولوجية</h1>
+        <p class="header-subtitle">New Assiut Technological University</p>
+      </div>
+      <p class="text-center" style="color: var(--text-gray-600); margin-top: 0.25rem;">نظام تسجيل الحضور والغياب الإلكتروني</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container" style="padding-top: 3rem; padding-bottom: 3rem;">
+    <!-- Welcome Section -->
+    <div class="text-center animate-fade-in" style="margin-bottom: 4rem;">
+      <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--text-gray-900);">مرحباً بك في نظام الحضور</h2>
+      <p style="font-size: 1.125rem; max-width: 42rem; margin: 0 auto; padding: 1rem; border-radius: 0.75rem; background: var(--card-bg-light); border: 1px solid var(--border-light); color: var(--text-gray-700);">
+        نظام متطور لتسجيل الحضور والغياب باستخدام تقنية QR Code، مع إدارة متقدمة للطلاب وسجلات الحضور
+      </p>
+    </div>
+
+    <!-- Main Actions / Cards -->
+    <div class="grid lg:grid-cols-3 gap-8 animate-slide-up" style="margin-bottom: 4rem;">
+      <!-- QR Card -->
+      <a href="{{ url_for('attendance') }}" class="card flex flex-col items-center text-center gap-6 group">
+        <div class="card-icon-container icon-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path>
+          </svg>
+        </div>
+        <h3 class="card-title">مسح QR Code</h3>
+        <p class="card-desc">قم بمسح كود QR الخاص بك لتسجيل الحضور فوراً وبكل سهولة</p>
+        <div class="btn btn-blue w-full">ابدأ المسح</div>
+      </a>
+
+      <!-- Dashboard Card -->
+      <a href="{{ url_for('admin_login') }}" class="card flex flex-col items-center text-center gap-6 group">
+        <div class="card-icon-container icon-indigo">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3 class="card-title">لوحة التحكم</h3>
+        <p class="card-desc">إدارة الطلاب والبيانات والسجلات بسهولة واحترافية تامة</p>
+        <div class="btn btn-indigo w-full">دخول الداشبورد</div>
+      </a>
+
+      <!-- Students Card -->
+      <a href="{{ url_for('student_login') }}" class="card flex flex-col items-center text-center gap-6 group">
+        <div class="card-icon-container icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <h3 class="card-title">صفحة الطلاب</h3>
+        <p class="card-desc">إنشاء حساب جديد أو تسجيل الدخول لمتابعة سجلاتك الشخصية</p>
+        <div class="btn btn-purple w-full">دخول الطلاب</div>
+      </a>
+    </div>
+
+    <!-- Quick Buttons -->
+    <div class="flex flex-col sm:flex-row gap-6 justify-center animate-slide-up" style="animation-delay: 0.2s;">
+      <a href="{{ url_for('attendance') }}" class="btn btn-blue" style="height: 3.5rem; font-size: 1.125rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-left: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path>
+        </svg>
+        مسح QR Code الآن
+      </a>
+      <a href="{{ url_for('admin_login') }}" class="btn btn-outline" style="height: 3.5rem; font-size: 1.125rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-left: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        دخول لوحة التحكم
+      </a>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer style="margin-top: 5rem; padding: 2.5rem 0; text-align: center; border-top: 1px solid var(--border-light); background: var(--card-bg-light); color: var(--text-gray-700);">
+    <div class="container">
+      <p style="font-weight: 700; font-size: 1.125rem;">© 2025 جامعة أسيوط الجديدة التكنولوجية</p>
+      <p style="font-size: 0.875rem; opacity: 0.7; margin-top: 0.5rem;">نظام متطور مصمم خصيصاً لخدمة الشباب</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

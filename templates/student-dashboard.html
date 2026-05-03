@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة الطالب - جامعة أسيوط الجديدة التكنولوجية</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .dashboard-bg {
+      min-height: 100vh;
+      background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+    }
+
+    .profile-header {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+    }
+
+    .profile-card {
+      max-width: 64rem;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      .profile-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      .profile-card > div:last-child {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(to bottom right, #3b82f6, #6366f1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      font-weight: 900;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .info-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .qr-container {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1.5rem;
+      display: inline-block;
+    }
+
+    .qr-container img {
+      width: 200px;
+      height: 200px;
+      image-rendering: pixelated;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 32rem;
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .modal-overlay.show .modal-content {
+      transform: scale(1);
+    }
+    .avatar-upload {
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .avatar-upload:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+    .avatar-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.5);
+      font-size: 0.75rem;
+      padding: 4px 0;
+      text-align: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .avatar-upload:hover .avatar-overlay {
+      opacity: 1;
+    }
+    .stats-box {
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-bg">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-card">
+        <div class="avatar avatar-upload" onclick="document.getElementById('photo-upload').click()">
+          {% if student.photo_url %}
+            <img src="{{ url_for('static', filename=student.photo_url) }}" alt="الصورة الشخصية" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+          {% else %}
+            {{ student.full_name[0] }}
+          {% endif %}
+          <div class="avatar-overlay">تغيير</div>
+        </div>
+        <input type="file" id="photo-upload" accept="image/*" style="display: none;" onchange="uploadPhoto(this)">
+        <div style="flex: 1;">
+          <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--text-gray-900);">{{ student.full_name }}</h1>
+          <p style="color: var(--text-gray-600); font-weight: 700;">{{ student.department }} - السنة {{ student.academic_year }}</p>
+          <p style="color: #3b82f6; font-weight: 900; font-size: 0.875rem;">ID: {{ student.student_id }}</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="{{ url_for('logout') }}" class="btn" style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; height: 2.5rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            خروج
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div style="max-width: 64rem; margin: 0 auto; padding: 2rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        
+        <!-- Student Info -->
+        <div class="stat-card">
+          <h2 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-gray-900);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.5rem;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            بياناتك الشخصية
+          </h2>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="info-item">
+              <div class="info-icon" style="background: rgba(59, 130, 246, 0.1);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray-500); font-weight: 700;">الاسم الكامل</p>
+                <p style="font-weight: 900; color: var(--text-gray-900);">{{ student.full_name }}</p>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon" style="background: rgba(99, 102, 241, 0.1);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray-500); font-weight: 700;">القسم</p>
+                <p style="font-weight: 900; color: var(--text-gray-900);">{{ student.department }}</p>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon" style="background: rgba(168, 85, 247, 0.1);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray-500); font-weight: 700;">السنة الدراسية</p>
+                <p style="font-weight: 900; color: var(--text-gray-900);">{{ student.academic_year }}</p>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon" style="background: rgba(16, 185, 129, 0.1);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray-500); font-weight: 700;">السكشن</p>
+                <p style="font-weight: 900; color: var(--text-gray-900);">{{ student.section }}</p>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="stat-card" style="text-align: center;">
+          <h2 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-gray-900);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.5rem;">
+              <rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path>
+            </svg>
+            رمز QR الخاص بك
+          </h2>
+          <p style="color: var(--text-gray-600); font-weight: 500; font-size: 0.875rem; margin-bottom: 1.5rem;">
+            استخدم هذا الرمز لتسجيل حضورك
+          </p>
+          <div class="qr-container">
+            <img id="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ student.student_id }}" alt="QR Code" />
+          </div>
+          <p style="margin-top: 1rem; font-weight: 900; color: #3b82f6;">{{ student.student_id }}</p>
+          <p style="font-size: 0.75rem; color: var(--text-gray-500); margin-top: 0.25rem;">الرقم التعريفي</p>
+        </div>
+        
+        <!-- Attendance Stats Card -->
+        <div class="stat-card" style="grid-column: 1 / -1;">
+          <h2 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-gray-900);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-left: 0.5rem;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            إحصائيات الحضور
+          </h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;">
+            <!-- Percentage Bar -->
+            <div style="flex: 1; min-width: 250px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                <span style="font-weight: 700; color: var(--text-gray-700);">نسبة الحضور الإجمالية</span>
+                <span style="font-weight: 900; color: #3b82f6; font-size: 1.25rem;">{{ attendance_pct }}%</span>
+              </div>
+              <div style="height: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="height: 100%; width: {{ attendance_pct }}%; background: linear-gradient(to right, #3b82f6, #6366f1); border-radius: 9999px; transition: width 1.5s ease-in-out;"></div>
+              </div>
+            </div>
+            
+            <!-- Total Days Box -->
+            <div class="stats-box" style="padding: 1.5rem; border-radius: 1.5rem; text-align: center; min-width: 150px; flex-shrink: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <p style="font-size: 0.875rem; color: var(--text-gray-500); font-weight: 700; margin-bottom: 0.25rem;">أيام الحضور</p>
+              <p style="font-size: 3rem; font-weight: 900; color: var(--text-gray-900); line-height: 1;">{{ attendance_count }}</p>
+              <p style="font-size: 0.875rem; color: #10b981; font-weight: 900; margin-top: 0.5rem;">يوم / مرة</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Profile Button -->
+        <div style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 1rem; margin-bottom: 1rem;">
+          <button class="btn btn-blue" onclick="openEditModal()" style="width: 250px; gap: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.125rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            تعديل بيانات الحساب
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="edit-modal" class="modal-overlay" onclick="if(event.target === this) closeEditModal()">
+    <div class="modal-content">
+      <h2 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 1.5rem; color: var(--text-gray-900); display: flex; align-items: center; gap: 0.5rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        تعديل البيانات
+      </h2>
+      <form id="edit-profile-form" onsubmit="handleEditProfile(event)">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-gray-700); margin-bottom: 0.5rem;">الاسم الكامل</label>
+          <div class="input-wrapper">
+            <input type="text" class="primary-input" id="edit-name" value="{{ student.full_name }}" style="width: 100%; padding: 0.75rem 1rem;">
+          </div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-gray-700); margin-bottom: 0.5rem;">القسم</label>
+          <div class="input-wrapper">
+            <input type="text" class="primary-input" id="edit-department" value="{{ student.department }}" style="width: 100%; padding: 0.75rem 1rem;">
+          </div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-gray-700); margin-bottom: 0.5rem;">كلمة المرور الجديدة (اختياري)</label>
+          <div class="input-wrapper">
+            <input type="password" class="primary-input" id="edit-password" placeholder="اتركها فارغة إذا لم ترد تغييرها" style="width: 100%; padding: 0.75rem 1rem;">
+          </div>
+        </div>
+        
+        <div id="edit-error" class="error-box" style="display: none; margin-bottom: 1rem;"></div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" class="btn btn-blue" id="edit-submit-btn" style="flex: 1;">حفظ التغييرات</button>
+          <button type="button" class="btn btn-outline" onclick="closeEditModal()" style="flex: 1;">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    function openEditModal() {
+      document.getElementById('edit-modal').classList.add('show');
+    }
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('show');
+      document.getElementById('edit-error').style.display = 'none';
+      document.getElementById('edit-password').value = '';
+    }
+
+    async function uploadPhoto(input) {
+      if (!input.files || !input.files[0]) return;
+      
+      const formData = new FormData();
+      formData.append('photo', input.files[0]);
+
+      try {
+        const res = await fetch('{{ url_for("api_upload_photo") }}', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.message || 'حدث خطأ أثناء رفع الصورة');
+        }
+      } catch (err) {
+        alert('حدث خطأ في الاتصال بالخادم');
+      }
+    }
+
+    async function handleEditProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('edit-submit-btn');
+      const errorBox = document.getElementById('edit-error');
+      
+      const fullName = document.getElementById('edit-name').value.trim();
+      const department = document.getElementById('edit-department').value.trim();
+      const newPassword = document.getElementById('edit-password').value;
+
+      errorBox.style.display = 'none';
+      btn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div>';
+      btn.style.pointerEvents = 'none';
+
+      try {
+        const res = await fetch('{{ url_for("api_update_profile") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            department: department,
+            new_password: newPassword
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          window.location.reload();
+        } else {
+          errorBox.textContent = data.message;
+          errorBox.style.display = 'flex';
+        }
+      } catch (err) {
+        errorBox.textContent = 'حدث خطأ في الاتصال بالخادم';
+        errorBox.style.display = 'flex';
+      } finally {
+        btn.innerHTML = 'حفظ التغييرات';
+        btn.style.pointerEvents = 'auto';
+      }
+    }
+  </script>
+</body>
+</html>

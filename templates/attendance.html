@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام الحضور - جامعة أسيوط الجديدة التكنولوجية</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <style>
+    .tab-btn { flex:1; min-width:120px; padding:0.75rem 0.5rem; border-radius:0.75rem; font-size:1rem; font-weight:700; transition:all 0.3s; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+    .tab-btn.active-blue { background-color:#2563eb; color:white; box-shadow:0 10px 15px -3px rgba(37,99,235,0.2); }
+    .tab-btn.active-indigo { background-color:#4f46e5; color:white; box-shadow:0 10px 15px -3px rgba(79,70,229,0.2); }
+    .tab-btn:not(.active-blue):not(.active-indigo) { color:var(--text-gray-700); }
+    .tab-btn:not(.active-blue):not(.active-indigo):hover { background-color:rgba(255,255,255,0.5); }
+    .tab-content { display:none; animation:fadeIn 0.5s ease; }
+    .tab-content.active { display:block; }
+    .dialog-overlay { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+    .dialog-overlay.open { opacity:1; pointer-events:auto; }
+    .dialog-content { background:var(--card-bg-light); padding:2rem; border-radius:1.5rem; width:90%; max-width:24rem; transform:scale(0.95); transition:transform 0.3s ease; border:1px solid var(--border-light); }
+    .dialog-overlay.open .dialog-content { transform:scale(1); }
+    .confirm-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+    .confirm-overlay.open { opacity:1; pointer-events:auto; }
+    .confirm-card { background:var(--card-bg-light); padding:2rem; border-radius:1.5rem; width:90%; max-width:28rem; border:1px solid var(--border-light); transform:scale(0.95); transition:transform 0.3s ease; }
+    .confirm-overlay.open .confirm-card { transform:scale(1); }
+    @media (max-width: 640px) {
+      .dialog-content, .confirm-card { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div style="background:rgba(255,255,255,0.7); backdrop-filter:blur(12px); border-bottom:1px solid var(--border-light); position:sticky; top:0; z-index:50;">
+    <div class="container" style="padding-top:1rem; padding-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <img src="{{ url_for('static', filename='public/logo.jpg') }}" alt="Logo" style="width:50px; height:50px; border-radius:50%; border:2px solid white;">
+        <div>
+          <h1 style="font-size:1.25rem; font-weight:700; background:linear-gradient(to right,#2563eb,#4f46e5); -webkit-background-clip:text; color:transparent;">جامعة أسيوط الجديدة التكنولوجية</h1>
+          <p style="font-size:0.75rem; color:var(--text-gray-600);">نظام مسح QR Code المتطور</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <a href="{{ url_for('index') }}" class="btn btn-outline" style="height:2.5rem; padding:0 1rem; display:flex; align-items:center; gap:0.5rem; border-radius:0.75rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          الرئيسية
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Dialog -->
+  <div id="password-dialog" class="dialog-overlay open">
+    <div class="dialog-content">
+      <div style="text-align:center;">
+        <div style="background:rgba(37,99,235,0.1); display:inline-flex; padding:1rem; border-radius:1rem; margin-bottom:1rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h2 style="font-size:1.25rem; font-weight:700; color:var(--text-gray-900); margin-bottom:1rem;">من فضلك أدخل كلمة المرور</h2>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <input type="password" id="auth-password" placeholder="****" class="input" style="text-align:center; font-size:1.5rem; letter-spacing:0.5em; font-weight:700; height:3.5rem;" autofocus />
+        <button id="auth-submit" class="btn btn-blue w-full" style="height:3.5rem; font-size:1.125rem;">دخول</button>
+        <a href="{{ url_for('index') }}" class="btn btn-outline w-full" style="height:3.5rem; border:none;">العودة للرئيسية</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Attendance Popup -->
+  <div id="confirm-overlay" class="confirm-overlay">
+    <div class="confirm-card" style="padding: 2rem; text-align: center; position: relative;">
+      <button id="confirm-no-icon" style="position: absolute; top: 1rem; left: 1rem; background: rgba(239,68,68,0.1); border: none; font-size: 1.5rem; cursor: pointer; color: #ef4444; width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.3s;">&times;</button>
+      
+      <div id="confirm-photo-container" style="margin-bottom: 1.5rem;"></div>
+      
+      <button id="confirm-yes-top" class="btn btn-blue w-full" style="height: 4rem; font-size: 1.25rem; font-weight: 900; margin-bottom: 1.5rem; box-shadow: 0 10px 15px -3px rgba(37,99,235,0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 1rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        تأكيد حضور الطالب
+      </button>
+      
+      <div id="confirm-student-info" style="text-align: right; display:flex; flex-direction:column; gap:0.75rem; padding:1rem; background:rgba(255,255,255,0.5); border-radius:1rem; border:1px solid var(--border-light);"></div>
+    </div>
+  </div>
+
+  <!-- Main App Content -->
+  <div id="app-content" class="container animate-fade-in" style="padding-top:2rem; padding-bottom:2rem; display:none;">
+    <div class="grid lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2 flex flex-col gap-8">
+        <!-- Tabs -->
+        <div style="background:var(--card-bg-light); padding:0.5rem; border-radius:1rem; display:flex; flex-wrap:wrap; gap:0.5rem; border:1px solid var(--border-light);">
+          <button class="tab-btn active-blue" data-target="scanner-tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect></svg>
+            مسح QR
+          </button>
+          <button class="tab-btn" data-target="search-tab" data-active-class="active-indigo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            بحث يدوي
+          </button>
+        </div>
+
+        <!-- Scanner Tab -->
+        <div id="scanner-tab" class="card tab-content active" style="padding:2rem;">
+          <div id="camera-prompt" class="flex flex-col items-center" style="gap:1.5rem;">
+            <div style="background:#eff6ff; padding:2rem; border-radius:50%;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect></svg>
+            </div>
+            <div class="text-center">
+              <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:0.5rem; color:var(--text-gray-900);">كاميرا المسح جاهزة</h3>
+              <p style="color:var(--text-gray-600); margin-bottom:1.5rem;">اضغط على الزر أدناه لتشغيل الكاميرا ومسح الكود</p>
+            </div>
+            <button id="start-camera" class="btn btn-blue w-full" style="height:4rem; font-size:1.25rem; border-radius:1rem;">تشغيل الكاميرا الآن</button>
+          </div>
+          <div id="camera-view" style="display:none; flex-direction:column; gap:1.5rem;">
+            <div style="position:relative; overflow:hidden; border-radius:1rem; border:4px solid rgba(96,165,250,0.3); box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+              <video id="video-feed" autoplay playsinline style="width:100%; max-height:400px; object-fit:cover;"></video>
+              <div style="position:absolute; top:1rem; right:1rem; background:#ef4444; color:white; padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700; animation:pulse 2s infinite;">LIVE</div>
+            </div>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div style="text-align:center;">
+              <p style="color:var(--text-gray-700); font-weight:500; margin-bottom:1rem;">يرجى توجيه الكود داخل إطار الكاميرا</p>
+              <button id="stop-camera" class="btn" style="width:100%; height:3.5rem; background:#ef4444; color:white; border:none;">إيقاف الكاميرا</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search-tab" class="card tab-content" style="padding:2rem;">
+          <div class="flex flex-col items-center" style="gap:1rem; margin-bottom:1.5rem;">
+            <div style="background:#eef2ff; padding:1.5rem; border-radius:50%;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </div>
+            <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-gray-900);">بحث يدوي</h3>
+            <p style="color:var(--text-gray-600); text-align:center;">يمكنك تسجيل الحضور بإدخال الرقم التعريفي للطالب يدوياً</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem;">
+            <label style="font-size:0.875rem; font-weight:700; color:var(--text-gray-700);">الرقم التعريفي (كود الطالب)</label>
+            <input type="text" id="manual-search-id" class="input" placeholder="أدخل الرقم مثلاً: 123456" style="height:3.5rem; font-size:1.125rem;" />
+          </div>
+          <button id="manual-search-btn" class="btn btn-indigo w-full" style="height:3.5rem; font-size:1.125rem;">بحث وتسجيل حضور</button>
+        </div>
+      </div>
+
+      <!-- Right Side -->
+      <div class="flex flex-col gap-8">
+        <div class="card" style="padding:2rem; background:linear-gradient(to bottom right,#2563eb,#4338ca); color:white; border:none; overflow:hidden; position:relative;">
+          <div style="text-align:center; position:relative; z-index:10;">
+            <h3 style="font-size:1.125rem; font-weight:700; opacity:0.9; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">الحاضرون اليوم</h3>
+            <div id="attendance-count" style="font-size:4.5rem; font-weight:900; line-height:1; margin-bottom:1rem;">0</div>
+            <p style="color:#dbeafe; font-weight:500;">شخص سجل حضوره</p>
+          </div>
+        </div>
+        <div class="card" style="padding:2rem; display:flex; flex-direction:column; height:500px;">
+          <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; color:var(--text-gray-900);">
+            سجل الحضور اليوم
+            <span style="font-size:0.75rem; background:#dcfce7; color:#15803d; padding:0.25rem 0.75rem; border-radius:9999px;">LIVE</span>
+          </h3>
+          <div id="attendance-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:0.75rem; padding-right:0.25rem;">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; opacity:0.4;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:0.5rem;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              <p style="font-weight:700;">لا توجد سجلات بعد</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Tab Logic
+    document.querySelectorAll('.tab-btn').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(t => t.className = 'tab-btn');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const activeClass = tab.getAttribute('data-active-class') || 'active-blue';
+        tab.classList.add(activeClass);
+        document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+      });
+    });
+
+    // Auth Logic
+    const PROTECTED_PASSWORD = "1010";
+    const authSubmit = document.getElementById('auth-submit');
+    const authPassword = document.getElementById('auth-password');
+    const dialogOverlay = document.getElementById('password-dialog');
+    const appContent = document.getElementById('app-content');
+
+    function handleAuth() {
+      if (authPassword.value === PROTECTED_PASSWORD) {
+        dialogOverlay.classList.remove('open');
+        setTimeout(() => { dialogOverlay.style.display = 'none'; appContent.style.display = 'block'; loadTodayAttendance(); }, 300);
+      } else {
+        alert('كلمة المرور غير صحيحة');
+        authPassword.value = '';
+      }
+    }
+    authSubmit.addEventListener('click', handleAuth);
+    authPassword.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAuth(); });
+
+    // --- Confirm Popup ---
+    const confirmOverlay = document.getElementById('confirm-overlay');
+    const confirmInfo = document.getElementById('confirm-student-info');
+    const confirmPhoto = document.getElementById('confirm-photo-container');
+    const confirmYesTop = document.getElementById('confirm-yes-top');
+    const confirmNoIcon = document.getElementById('confirm-no-icon');
+    let pendingStudentId = null;
+
+    function showConfirmPopup(student) {
+      pendingStudentId = student.student_id;
+      
+      const photoHtml = student.photo_url 
+        ? `<img src="/static/${student.photo_url}" alt="صورة الطالب" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; margin: 0 auto; display: block; box-shadow: 0 10px 15px -3px rgba(37,99,235,0.2);">` 
+        : `<div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(to bottom right, #3b82f6, #6366f1); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 2.5rem; border: 3px solid #2563eb; margin: 0 auto; box-shadow: 0 10px 15px -3px rgba(37,99,235,0.2);">${student.full_name[0]}</div>`;
+        
+      confirmPhoto.innerHTML = photoHtml;
+      
+      confirmInfo.innerHTML = `
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-gray-500);font-weight:700;">الاسم:</span><span style="font-weight:900;color:var(--text-gray-900);">${student.full_name}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-gray-500);font-weight:700;">القسم:</span><span style="font-weight:900;color:var(--text-gray-900);">${student.department}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-gray-500);font-weight:700;">السنة:</span><span style="font-weight:900;color:var(--text-gray-900);">${student.academic_year}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-gray-500);font-weight:700;">ID:</span><span style="font-weight:900;color:#2563eb;">${student.student_id}</span></div>
+      `;
+      confirmOverlay.classList.add('open');
+    }
+
+    confirmNoIcon.addEventListener('click', () => { confirmOverlay.classList.remove('open'); pendingStudentId = null; });
+
+    confirmYesTop.addEventListener('click', () => {
+      if (!pendingStudentId) return;
+      
+      const originalBtnContent = confirmYesTop.innerHTML;
+      confirmYesTop.innerHTML = '<div style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>';
+      confirmYesTop.disabled = true;
+
+      fetch('/api/attendance/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: pendingStudentId })
+      })
+      .then(r => r.json())
+      .then(data => {
+        confirmOverlay.classList.remove('open');
+        confirmYesTop.innerHTML = originalBtnContent;
+        confirmYesTop.disabled = false;
+        alert(data.message);
+        if (data.success) loadTodayAttendance();
+        pendingStudentId = null;
+      })
+      .catch(() => { alert('حدث خطأ في الاتصال'); confirmYesTop.innerHTML = originalBtnContent; confirmYesTop.disabled = false; });
+    });
+
+    // --- Load Today's Attendance from DB ---
+    function loadTodayAttendance() {
+      fetch('/api/attendance/today')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('attendance-count').textContent = data.count;
+          const listEl = document.getElementById('attendance-list');
+          if (data.count === 0) {
+            listEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;opacity:0.4;"><p style="font-weight:700;">لا توجد سجلات بعد</p></div>';
+          } else {
+            listEl.innerHTML = data.records.map((a, i) => `
+              <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(255,255,255,0.5);border-radius:1rem;border:1px solid var(--border-light);">
+                <div style="width:2.5rem;height:2.5rem;border-radius:0.75rem;background:linear-gradient(to bottom right,#dbeafe,#eff6ff);color:#1d4ed8;display:flex;align-items:center;justify-content:center;font-weight:900;">${i+1}</div>
+                <div style="flex:1;">
+                  <p style="font-weight:700;color:var(--text-gray-900);">${a.full_name}</p>
+                  <p style="font-size:0.75rem;color:var(--text-gray-600);font-family:monospace;">${a.student_id} | ${a.time}</p>
+                </div>
+              </div>
+            `).join('');
+          }
+        });
+    }
+
+    // --- Lookup student from API ---
+    function lookupStudent(studentId, source) {
+      const endpoint = source === 'scan' ? '/api/attendance/scan' : '/api/attendance/search';
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showConfirmPopup(data.student);
+        } else {
+          alert(data.message || 'لم يتم العثور على الطالب');
+        }
+      })
+      .catch(() => alert('حدث خطأ في الاتصال بالسيرفر'));
+    }
+
+    // --- Manual Search ---
+    document.getElementById('manual-search-btn').addEventListener('click', () => {
+      const id = document.getElementById('manual-search-id').value.trim();
+      if (!id) return;
+      lookupStudent(id, 'search');
+      document.getElementById('manual-search-id').value = '';
+    });
+
+    // --- Camera/QR Scanner ---
+    const startCameraBtn = document.getElementById('start-camera');
+    const stopCameraBtn = document.getElementById('stop-camera');
+    const cameraPrompt = document.getElementById('camera-prompt');
+    const cameraViewEl = document.getElementById('camera-view');
+    const video = document.getElementById('video-feed');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let scanning = false;
+
+    startCameraBtn.addEventListener('click', async () => {
+      cameraPrompt.style.display = 'none';
+      cameraViewEl.style.display = 'flex';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        scanning = true;
+        requestAnimationFrame(scanQR);
+      } catch (err) {
+        alert('حدث خطأ في تشغيل الكاميرا.');
+        cameraViewEl.style.display = 'none';
+        cameraPrompt.style.display = 'flex';
+      }
+    });
+
+    function scanQR() {
+      if (!scanning) return;
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+        if (code) {
+          lookupStudent(code.data, 'scan');
+          scanning = false;
+          setTimeout(() => { if (cameraViewEl.style.display !== 'none') { scanning = true; requestAnimationFrame(scanQR); } }, 3000);
+          return;
+        }
+      }
+      requestAnimationFrame(scanQR);
+    }
+
+    stopCameraBtn.addEventListener('click', () => {
+      scanning = false;
+      if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+      cameraViewEl.style.display = 'none';
+      cameraPrompt.style.display = 'flex';
+    });
+  </script>
+</body>
+</html>
