@@ -23,10 +23,14 @@ import uuid
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Upload config
-UPLOAD_FOLDER = os.path.join(app.static_folder, 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+# Upload config - Use /tmp on Vercel
+if os.environ.get('VERCEL'):
+    UPLOAD_FOLDER = '/tmp/uploads'
+else:
+    UPLOAD_FOLDER = os.path.join(app.static_folder, 'uploads')
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 
 def allowed_file(filename):

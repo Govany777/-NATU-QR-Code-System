@@ -7,7 +7,12 @@ import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'natu.db')
+# Use /tmp for database on Vercel because the root is read-only
+if os.environ.get('VERCEL'):
+    DATABASE = '/tmp/natu.db'
+else:
+    DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'natu.db')
+
 
 
 def get_db():
